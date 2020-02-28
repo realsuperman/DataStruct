@@ -7,8 +7,8 @@ public class ChainHashTester {
         static final int NAME=2;
         private Integer no;
         private String name;
-        Integer keyCode(){
-            return no;
+        String keyCode(){
+            return name;
         }
         public String toString(){
             return name;
@@ -55,7 +55,7 @@ public class ChainHashTester {
             Menu menu;
             Data data;
             Data temp = new Data();
-            ChainHash<Integer,Data> hash = new ChainHash<>(13);
+            ChainHash<String,Data> hash = new ChainHash<>(13);
             do{
                 switch(menu=SelectMenu()){
                     case ADD :
