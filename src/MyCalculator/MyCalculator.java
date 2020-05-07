@@ -1,17 +1,3 @@
-/*
-요구사항
-
-1. 수식은 괄호가 있을 수 있고, 띄어쓰기가 ' '되어 있다고 가정해도 됩니다.
-    operator는 +, -, *, / 네 가지로 하고 operand는 양수로만 하고 실수형
-    (정수형이 아님)으로 할 것
-
-2. 잘못 입력 된 수식이 경우 에러 메시지를 출력하고 가능한 모든 에러 상황들을
-    확인 할 수 있어야 함
-
-3. 사용자 인터페이스는 자율적으로 정하면 됨
-
-예시 : (5 + 3) * 2 -> 53+2*
- */
 package MyCalculator;
 
 import javax.script.ScriptEngine;
@@ -33,20 +19,35 @@ public class MyCalculator {
 
         while(true){
             String yn;
-
             System.out.println("Infix로 수식을 입력하시오.");
-            String val = parseString(sc.nextLine());
+            String val = "";
+            boolean check=false;
 
-            System.out.println("Postfix로 변환 : "+val);
-            System.out.println("계산을 시작할까요? (Y/N)");
-            yn=sc.next();
-            if(yn.equalsIgnoreCase("y")){
-                double sum = calculator(val);
-                System.out.println("계산 값 : "+sum);
+            String userInput=sc.nextLine();
+            if(checkVal(userInput)){
+                System.out.println("열린괄호와 닫힌괄호의 수가 맞지않습니다.");
+                check=true;
+            }
+            if(check==false&&checkSusik(userInput)){
+                System.out.println("수식오류가 있습니다. 다시한번 확인해주세요.");
+                check=true;
+            }
+
+            if(check==false) {
+                val=parseString(userInput);
+                System.out.println("Postfix로 변환 : " + val);
+                System.out.println("계산을 시작할까요? (Y/N)");
+                yn = sc.next();
+                if (yn.equalsIgnoreCase("y")) {
+                    double sum = calculator(val);
+                    System.out.println("계산 값 : " + sum);
+                }
             }
 
             System.out.println("계속하시겠습니까? (Y/N)");
             yn = sc.next();
+            sc.nextLine();
+            parseLocation.clear();
             if(yn.equalsIgnoreCase("n")){
                 System.out.println("사용해주셔서 감사합니다.");
                 System.out.println("프로그램을 종료합니다.");
@@ -81,14 +82,12 @@ public class MyCalculator {
             }else{ // 숫자가 아닌 기호나 괄호를 만난경우에 해당된다.
                 if(index>0){
                     parseLocation.add(index-1);
-                    //System.out.println(index-1);
                 }
                 index=0;
             }
         }
         if(index>0){
             parseLocation.add(index-1);
-            //System.out.println(index-1);
         }
 
         while(!st.isEmpty()){
@@ -134,13 +133,12 @@ public class MyCalculator {
     }
 
     public static double calculator(String str){
+        int index=0;
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
-
         DoubleStack st = new DoubleStack(100);
-        String temp="";
 
-        for(int i=0;i<str.length();i++){
+        for(int i=0;i<str.length();){
             int sw=0;
             for(int j=0;j<4;j++){
                 if(array[j].equals(String.valueOf(str.charAt(i)))){
@@ -149,23 +147,49 @@ public class MyCalculator {
             }
 
             if(sw==0){
-                st.push(Double.parseDouble(String.valueOf(str.charAt(i))));
+                st.push(Double.parseDouble(str.substring(i,i+parseLocation.get(index)+1)));
+                i=i+parseLocation.get(index++)+1;
             }else{ // 연산자를 만난경우
                 double a,b;
                 b=st.pop();
                 a=st.pop();
+                String sum=Double.toString(a);
+                sum+=String.valueOf(str.charAt(i));
+                sum+=Double.toString(b);
 
                 try {
-                    String sum=Double.toString(a);
-                    sum+=String.valueOf(str.charAt(i));
-                    sum+=Double.toString(b);
                     st.push((Double) engine.eval(sum));
                 }catch(ScriptException e) {
 
                 }
-
+                i++;
             }
         }
         return st.pop();
+    }
+
+    public static boolean checkVal(String str){ // 괄호 갯수 체크
+        int openParenthesis = 0;
+        int closeParenthesis = 0;
+        for(int i=0;i<str.length();i++){
+            if("(".equals(String.valueOf(str.charAt(i)))){ // '(' 갯수 체크
+                openParenthesis++;
+            }else if(")".equals(String.valueOf(str.charAt(i)))){ // ')' 갯수 체크
+                closeParenthesis++;
+            }
+        }
+        if(openParenthesis==closeParenthesis) return false;
+        return true;
+    }
+
+    public static boolean checkSusik(String str){ // 수식 에러 체크
+        ScriptEngineManager mgr = new ScriptEngineManager();
+        ScriptEngine engine = mgr.getEngineByName("JavaScript");
+        try {
+            engine.eval(str);
+        }catch(ScriptException e) {
+            return true;
+        }
+        return false;
     }
 }
